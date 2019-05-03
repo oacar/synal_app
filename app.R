@@ -11,12 +11,12 @@ library(shiny)
 library(msaR)
 library(Biostrings)
 
-load('allaln.RData')
+load('all_aln.RData')
 # Define UI for application that draws a histogram
 ui <- fluidPage(
    
    # Application title
-   titlePanel("Old Faithful Geyser Data"),
+   titlePanel("Synteny alignments"),
    textInput(inputId="seqfile", label="Caption", value='YBR013C'),
    
    # Sidebar with a slider input for number of bins 
@@ -28,9 +28,13 @@ ui <- fluidPage(
                                    "Syntenic Block", 
                                    "Subalignment"),
                     selected = "Amino Acid"))),
-        column(2, wellPanel(
+        column(3, wellPanel(
           # This outputs the dynamic UI component
           uiOutput("ui")
+        )),
+        column(3, wellPanel(
+          # This outputs the dynamic UI component
+          uiOutput("ui2")
         ))
         #verbatimTextOutput("value")
         
@@ -55,15 +59,36 @@ server <- function(input, output) {
     # UI component and send it to the client.
     if(input$var== "Pairwise"){
       selectInput("dynamic", "Dynamic",
-                  choices = c("Option 1" = "option1",
-                              "Option 2" = "option2"),
-                  selected = "option2"
-      ) }
+                  choices = c(setdiff(names(all_aln[[input$seqfile]]),c('subalign','aa')))) }
   })
-  
+  output$ui2 <- renderUI({
+    if (is.null(input$dynamic))
+      return()
+    
+    # Depending on input$input_type, we'll generate a different
+    # UI component and send it to the client.
+    if(input$var== "Pairwise"){switch(input$dynamic,
+           "Spar" = selectInput("number", "Dynamic",
+                                choices = c(names(all_aln[[input$seqfile]][["Spar"]]))),
+           "Smik" =selectInput("number", "Dynamic",
+                               choices = c(names(all_aln[[input$seqfile]][["Smik"]]))),
+           "Skud" =  selectInput("number", "Dynamic",
+                                 choices = c(names(all_aln[[input$seqfile]][["Skud"]]))),
+           "Sbay" = selectInput("number", "Dynamic",
+                                choices = c(names(all_aln[[input$seqfile]][["Sbay"]]))),
+           "Sarb" = selectInput("number", "Dynamic",
+                                choices = c(names(all_aln[[input$seqfile]][["Sarb"]]))))}
+  })
   output$msa <- renderMsaR(
     {
-      msaR(all_aln[[input$seqfile]]$aa,colorscheme = 'clustal')
+      selection=switch (input$var,
+              'Pairwise' = all_aln[[input$seqfile]][[input$dynamic]][[input$number]],
+              "Amino Acid"=all_aln[[input$seqfile]][['aa']],
+              "Syntenic Block"=all_aln[[input$seqfile]][['dna']],
+              "Subalignment"=all_aln[[input$seqfile]][['subalign']]
+      )
+      
+      msaR(selection,colorscheme = 'clustal')
     }
   )
   #output$msa <- renderText('hellos')
