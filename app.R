@@ -64,9 +64,6 @@ server <- function(input, output) {
   output$ui2 <- renderUI({
     if (is.null(input$dynamic))
       return()
-    
-    # Depending on input$input_type, we'll generate a different
-    # UI component and send it to the client.
     if(input$var== "Pairwise"){switch(input$dynamic,
            "Spar" = selectInput("number", "Dynamic",
                                 choices = c(names(all_aln[[input$seqfile]][["Spar"]]))),
